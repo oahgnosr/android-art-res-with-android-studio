@@ -1,10 +1,6 @@
 package com.example.c3;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.os.Build;
+import android.animation.ValueAnimator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -13,6 +9,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.lang.ref.WeakReference;
 
 public class TestActivity extends AppCompatActivity implements View.OnClickListener,
         View.OnLongClickListener {
@@ -28,26 +29,7 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
 
     private int mCount = 0;
 
-    @SuppressLint("HandlerLeak")
-    private Handler mHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MESSAGE_SCROLL_TO: {
-                    mCount++;
-                    if (mCount <= FRAME_COUNT) {
-                        float fraction = mCount / (float) FRAME_COUNT;
-                        int scrollX = (int) (fraction * 100);
-                        mButton1.scrollTo(scrollX, 0);
-                        mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLL_TO, DELAYED_TIME);
-                    }
-                    break;
-                }
-
-                default:
-                    break;
-            }
-        };
-    };
+    private final Handler mHandler = new MyHandler(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,46 +45,46 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
         mButton2.setOnLongClickListener(this);
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            Log.d(TAG, "button1.left=" + mButton1.getLeft());
-            Log.d(TAG, "button1.x=" + mButton1.getX());
-        }
+        Log.d(TAG, "button1.left=" + mButton1.getLeft());
+        Log.d(TAG, "button1.x=" + mButton1.getX());
     }
 
     @Override
     public void onClick(View v) {
         if (v == mButton1) {
+            mCount = 0;
+
             // mButton1.setTranslationX(100);
 
-            // Log.d(TAG, "button1.left=" + mButton1.getLeft());
-            // Log.d(TAG, "button1.x=" + mButton1.getX());
-            // ObjectAnimator.ofFloat(mButton1, "translationX", 0, 100)
-            // .setDuration(1000).start();
-            // MarginLayoutParams params = (MarginLayoutParams) mButton1
-            // .getLayoutParams();
-            // params.width += 100;
-            // params.leftMargin += 100;
-            // mButton1.requestLayout();
-            // mButton1.setLayoutParams(params);
+            // 属性动画
+//            Log.d(TAG, "button1.left=" + mButton1.getLeft());
+//            Log.d(TAG, "button1.x=" + mButton1.getX());
+//            ObjectAnimator.ofFloat(mButton1, "translationX", 0, 100).setDuration(1000).start();
 
-            // final int startX = 0;
-            // final int deltaX = 100;
-            // ValueAnimator animator = ValueAnimator.ofInt(0,
-            // 1).setDuration(1000);
-            // animator.addUpdateListener(new AnimatorUpdateListener() {
-            // @Override
-            // public void onAnimationUpdate(ValueAnimator animator) {
-            // float fraction = animator.getAnimatedFraction();
-            // mButton1.scrollTo(startX + (int) (deltaX * fraction), 0);
-            // }
-            // });
-            // animator.start();
+            // 改变布局
+//            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) mButton1.getLayoutParams();
+//            params.height += 100;
+//            params.topMargin += 100;
+//            mButton1.requestLayout();
+//            mButton1.setLayoutParams(params);
 
-            mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLL_TO, DELAYED_TIME);
+            final int startX = 0;
+            final int deltaX = 100;
+            ValueAnimator animator = ValueAnimator.ofInt(0, 1).setDuration(1000);
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animator) {
+                    float fraction = animator.getAnimatedFraction();
+                    mButton1.scrollTo(startX + (int) (deltaX * fraction), 0);
+                }
+            });
+            animator.start();
+
+            // 延时策略
+//            mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLL_TO, DELAYED_TIME);
         }
     }
 
@@ -116,5 +98,42 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         Log.d(TAG, "onResume");
         super.onResume();
+    }
+
+    private void handleMessage(Message msg) {
+        switch (msg.what) {
+            case MESSAGE_SCROLL_TO: {
+                mCount++;
+                if (mCount <= FRAME_COUNT) {
+                    float fraction = mCount / (float) FRAME_COUNT;
+                    //
+                    int scrollX = (int) (fraction * 100);
+
+                    // scrollTo() 只能改变 View 内容的位置，无法改变 View 在布局中的位置
+                    mButton1.scrollTo(scrollX, 0);
+                    mHandler.sendEmptyMessageDelayed(MESSAGE_SCROLL_TO, DELAYED_TIME);
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+
+    private static class MyHandler extends Handler {
+        private WeakReference<TestActivity> weakReference;
+
+        MyHandler(TestActivity testActivity) {
+            weakReference = new WeakReference<>(testActivity);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            TestActivity testActivity = weakReference.get();
+            if (testActivity != null) {
+                testActivity.handleMessage(msg);
+            }
+        }
     }
 }

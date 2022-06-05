@@ -13,6 +13,13 @@
         android:background="#ff0000"
         android:text="MovingButton" />
 
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:text="A" />
+
     <com.example.c3.view.TestButton
         android:id="@+id/button2"
         android:layout_width="100dp"
@@ -22,10 +29,4 @@
         android:text="我可以滑动"
         android:textColor="@android:color/white" />
 
-    <EditText
-        android:id="@+id/editText1"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:text="A"></EditText>
 </LinearLayout>

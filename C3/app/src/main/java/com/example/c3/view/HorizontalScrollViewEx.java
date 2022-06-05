@@ -26,7 +26,7 @@ public class HorizontalScrollViewEx extends ViewGroup {
     private Scroller mScroller;
     private VelocityTracker mVelocityTracker;
 
-    public HorizontalScrollViewEx(Context context) {
+    public HorizontalScrollViewEx(Context  context) {
         super(context);
         init();
     }
